@@ -50,12 +50,13 @@ def parse_labels(line):
 load_data=sys.argv[1]
 date,time,pressures,labels=laden(load_data)
 date_fmt = '%d-%m-%Y %H:%M:%S'
+myFMT=mdate.DateFormatter(date_fmt)
 
 times=[]    #should be list NOT list of lists
-max_times=0
+max_times=dt.datetime.strptime(str(date[0])+' '+str(time[0]), date_fmt)
 max_times_str=''
 for i,j in zip(date,time):
-    times.append(mdate.datestr2num(str(i)+' '+str(j))) #looks like [date time
+    times.append(dt.datetime.strptime(str(i)+' '+str(j), date_fmt))
     if times[-1]>max_times:
         max_times=times[-1]
         max_times_str=i+' '+j
@@ -98,9 +99,10 @@ for k in range(6):
 ax.set_yscale('log')
 ax.set_ylim(1e-12,1e2)
 ax.grid(True,which='both',ls='-',color='0.45')
-ax.xaxis.set_major_formatter(mdate.DateFormatter(date_fmt))
-ax.format_xdata = mdate.DateFormatter(date_fmt)
 fig.autofmt_xdate()
+ax.format_xdata = mdate.DateFormatter('%d')
+ax.xaxis.set_major_formatter(myFMT)
+
 
 ax.set_ylabel('Pressure [mbar]')
 lgnd=ax.legend(loc=3)
