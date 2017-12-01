@@ -313,7 +313,10 @@ if __name__ == '__main__':
     logging.debug(arguments)
     logging.info('... starting up ...')
     date_fmt = '%d-%m-%Y %H:%M:%S'
-    datenow = dt.datetime.now().strftime(date_fmt)      # get formatted datetime object
+    myFMT=mdate.DateFormatter(date_fmt)
+    
+    now = dt.datetime.now().strftime(date_fmt)      # get formatted datetime object
+    datenow=dt.datetime.strptime(now, date_fmt)
     pressures = [[],[],[],[],[],[]] #six membered list of lists that holds pressure data
     ''' 
     [[CH1p1, CH1p2, ..., CH1pn], [CH2p1, CH2p2, ..., CH2pn], ... , [CH6p1, CH6p2, ..., CH6pn]]
@@ -335,7 +338,7 @@ if __name__ == '__main__':
     labels_begin=labels
         
     ''' Prepares and writes logfile '''  
-    times.append(mdate.datestr2num(datenow))            #and append it to times list
+    times.append(datenow)          #and append it to times list
     #write header if logfile was never used ...
     header = 'Time\t\t\t\t\t'\
             + labels[0] + '[mbar]\t\t' + labels[1] + '[mbar]\t\t' + labels[2] + '[mbar]\t\t'\
@@ -383,7 +386,7 @@ if __name__ == '__main__':
             pressures[sensor_num].append(1e10)
             if plot: labels[sensor_num] = labels_begin[sensor_num]+' - Identification error'
     with open(pressurelogfile_name, "a") as logfile:
-        logfile.write("%s\t\t%.2e\t\t%.2e\t\t%.2e\t\t%.2e\t\t\t%.2e\t\t\t%.2e\n"%(datenow,pressures[0][0],pressures[1][0],pressures[2][0],pressures[3][0],pressures[4][0],pressures[5][0]))  
+        logfile.write("%s\t\t%.2e\t\t%.2e\t\t%.2e\t\t%.2e\t\t\t%.2e\t\t\t%.2e\n"%(now,pressures[0][0],pressures[1][0],pressures[2][0],pressures[3][0],pressures[4][0],pressures[5][0]))  
     ''' Prepare plot '''
     if plot:
         logging.debug('Preparing plot')
@@ -404,8 +407,11 @@ if __name__ == '__main__':
         ax.set_ylabel('Pressure [mbar]')
 
         ax.legend()
-        plt.gca().xaxis.set_major_formatter(mdate.DateFormatter(date_fmt))
-        plt.gcf().autofmt_xdate()
+        fig.autofmt_xdate()
+        ax.format_xdata = mdate.DateFormatter('%d')
+        ax.xaxis.set_major_formatter(myFMT)
+        #plt.gca().xaxis.set_major_formatter(mdate.DateFormatter(date_fmt))
+        #plt.gcf().autofmt_xdate()
 
         ax2 = ax.twinx()
         #Plot every sensor with a pressure > 1e-1 on the second axis
@@ -432,22 +438,14 @@ if __name__ == '__main__':
             status,pre = read_gauges(ser)
             ser.close()
         
-        ''' Keep track of changing labels - Crashes program when labels are changed!'''
-        """
-        labels_old = labels
-        if not labels_old == labels:
-            with open(pressurelogfile_name, "a") as logfile:
-                logfile.write('#labelschanged')
-                logfile.write('Time\t\t\t\t\t'\
-               + labels[0] + '[mbar]\t\t' + labels[1] + '[mbar]\t\t' + labels[2] + '[mbar]\t\t'\
-               + labels[3] + '[mbar]\t\t\t' + labels[4] + '[mbar]\t\t\t' + labels[5] + '[mbar]\n')
-        """
-        datenow = dt.datetime.now().strftime(date_fmt)
-        times.append(mdate.datestr2num(datenow))
+        now = dt.datetime.now().strftime(date_fmt)      # get formatted datetime object
+        datenow=dt.datetime.strptime(now, date_fmt)
+        times.append(datenow)
         
         ''' To update the legend when a sensor is switched on/off we have to check every time we read a value '''
         ''' Updates Values in pressure lists '''
-        ax.legend_.remove()
+        if plot:
+            ax.legend_.remove()
         for num,sensor in enumerate(status):
             if sensor == 0:
                 pressures[num].append(pre[num])
@@ -477,9 +475,9 @@ if __name__ == '__main__':
         
         ''' Write to log '''
         with open(pressurelogfile_name, "a") as logfile:
-            logfile.write('%s\t\t%.2e\t\t%.2e\t\t%.2e\t\t%.2e\t\t\t%.2e\t\t\t%.2e\n'%(datenow,pressures[0][-1],pressures[1][-1],pressures[2][-1],pressures[3][-1],pressures[4][-1],pressures[5][-1]))
+            logfile.write('%s\t\t%.2e\t\t%.2e\t\t%.2e\t\t%.2e\t\t\t%.2e\t\t\t%.2e\n'%(now,pressures[0][-1],pressures[1][-1],pressures[2][-1],pressures[3][-1],pressures[4][-1],pressures[5][-1]))
         ''' Update console output '''
-        update_terminal(datenow,labels_begin,pressures)
+        update_terminal(now,labels_begin,pressures)
         ''' Update plot '''
         if plot:
             for j in range(6):
